@@ -1,34 +1,26 @@
 version: "3.8"
 services:
-  postgres:
+  pythonapp:
+    container_name: pythonapp
+    image: pythonapp
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+    depends_on:
+      - db
+  
+  db:
+    container_name: db
     image: postgres:11-alpine
-    environment:
-      POSTGRES_USER: hospital_management
-      POSTGRES_PASSWORD: aG9zcGl0YWxfbWFuYWdlbWVudA
-      POSTGRES_DB: hospital_management
     ports:
-      - 5432:5432
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
     volumes:
-      - type: volume
-        source: pgdata
-        target: /var/lib/postgresql/data
-  consumer:
-    depends_on:
-      - postgres
-    build:
-      context: .
-    env_file: .env
-    environment:
-      RUN_MIGRATION: "false"
-    command: consumer
-  web:
-    depends_on:
-      - postgres
-    build:
-      context: .
-    command: web
-    env_file: .env
-    ports:
-      - 8000:8000
+      - pgdata:/var/lib/postgresql/data
 volumes:
-  pgdata:
+  pgdata: {}
