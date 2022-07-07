@@ -13,6 +13,10 @@ from common.database import db
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
+    gcp_cred: str = os.environ.get("gcp_cred", "user-api.json")
+
+    # Directories
+    root_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     if test_config is None:
         app.config.from_mapping(
@@ -32,4 +36,7 @@ def create_app(test_config=None):
     app.register_blueprint(employee, url_prefix='/employee')
     app.register_blueprint(patients, url_prefix='/patients')
 
+    gcp_os = os.path.join(root_dir, "secrets", gcp_cred)
+
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_os
     return app

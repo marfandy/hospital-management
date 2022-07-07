@@ -31,8 +31,8 @@ class Doctors(db.Model):
     password = db.Column(db.String(150), nullable=False)
     gender = db.Column(db.Enum(Gender))
     birthdate = db.Column(db.Date, nullable=False)
-    work_start_time = db.Column(db.DateTime, nullable=False)
-    work_end_time = db.Column(db.DateTime, nullable=False)
+    work_start_time = db.Column(db.Time, nullable=False)
+    work_end_time = db.Column(db.Time, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
     updated_at = db.Column(db.DateTime, default=datetime.now())
 
