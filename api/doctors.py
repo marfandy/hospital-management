@@ -1,15 +1,18 @@
 import datetime
-from common.database import Doctors, db, Gender
-from common.format_check import format_check
+
+from flask_jwt_extended import jwt_required
+from common.database import UserType, Users, db, Gender
+from common.helper import format_check
 from flask import Blueprint
 from flask import request, make_response, jsonify
 from sqlalchemy.exc import IntegrityError
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash
 
 route = Blueprint('doctor', __name__)
 
 
 @route.post('')
+@jwt_required()
 def register_doctor() -> dict:
     name: str = request.json.get('name')
     username: str = request.json.get('username')
@@ -40,7 +43,7 @@ def register_doctor() -> dict:
     if work_start_time > work_end_time:
         return make_response(jsonify({"message": "start time should be lower than end time"}), 400)
 
-    doctor = Doctors(
+    doctor = Users(
         name=name,
         username=username,
         password=generate_password_hash(password),
@@ -48,6 +51,7 @@ def register_doctor() -> dict:
         birthdate=birthdate,
         work_start_time=work_start_time,
         work_end_time=work_end_time,
+        user_type=UserType.doctor
     )
     try:
         db.session.add(doctor)
@@ -71,8 +75,9 @@ def register_doctor() -> dict:
 
 
 @route.get('')
+@jwt_required()
 def get_list_doctors() -> dict:
-    doctors = Doctors.query.all()
+    doctors = Users.query.filter(Users.user_type == UserType.doctor)
 
     response = [{
         "id": data.id,
@@ -89,9 +94,10 @@ def get_list_doctors() -> dict:
 
 
 @route.get('/<int:id>')
+@jwt_required()
 def get_detail_doctor(id) -> dict:
-    doctor = Doctors.query.get(id)
-    print(doctor.work_start_time)
+    doctor = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.doctor).first()
 
     if doctor:
         response = {
@@ -106,10 +112,11 @@ def get_detail_doctor(id) -> dict:
         }
         return make_response(jsonify({"message": "success", "data": response}), 200)
 
-    return make_response(jsonify({"message": "doctor not found!"}), 404)
+    return make_response(jsonify({"message": "doctor not found!"}), 400)
 
 
 @route.put('/<int:id>')
+@jwt_required()
 def update_doctor(id) -> dict:
     name: str = request.json.get('name')
     username: str = request.json.get('username')
@@ -119,7 +126,8 @@ def update_doctor(id) -> dict:
     work_start_time: datetime.time = request.json.get('work_start_time')
     work_end_time: datetime.time = request.json.get('work_end_time')
 
-    doctor = Doctors.query.get(id)
+    doctor = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.doctor).first()
 
     if doctor:
         doctor.name = name
@@ -149,14 +157,16 @@ def update_doctor(id) -> dict:
 
         return make_response(jsonify({"message": "doctor updated", "data": response}), 200)
 
-    return make_response(jsonify({"message": "doctor not found!"}), 404)
+    return make_response(jsonify({"message": "doctor not found!"}), 400)
 
 
 @route.delete('/<int:id>')
+@jwt_required()
 def delete_doctor(id) -> dict:
-    doctor = Doctors.query.get(id)
+    doctor = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.doctor).first()
     if doctor:
         db.session.delete(doctor)
         db.session.commit()
         return make_response(jsonify({"message": "doctor deleted"}), 200)
-    return make_response(jsonify({"message": "doctor not found!"}), 404)
+    return make_response(jsonify({"message": "doctor not found!"}), 400)

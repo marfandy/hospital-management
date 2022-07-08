@@ -1,11 +1,24 @@
-FROM python:3.7-slim-buster
+FROM python:3.7
 
-COPY requirements.txt .
+RUN mkdir /code
+WORKDIR /code
 
-RUN pip install -r requirements.txt
+RUN apt-get update
+
+COPY requirements.txt ./
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+ENV TZ=Etc/UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 EXPOSE 80
+
+# CMD flask run -h 0.0.0.0 -p 5000
+
+# CMD ["flask", "run"]
 
 CMD ["flask", "run", "--host=0.0.0.0", "--port=80"]

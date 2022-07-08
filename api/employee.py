@@ -1,15 +1,18 @@
 import datetime
-from common.database import Employee, db, Gender
-from common.format_check import format_check
+
+from flask_jwt_extended import jwt_required
+from common.database import UserType, Users, db, Gender
+from common.helper import format_check
 from flask import Blueprint
 from flask import request, make_response, jsonify
 from sqlalchemy.exc import IntegrityError
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash
 
 route = Blueprint('employee', __name__)
 
 
 @route.post('')
+@jwt_required()
 def register_employee() -> dict:
     name: str = request.json.get('name')
     username: str = request.json.get('username')
@@ -29,17 +32,18 @@ def register_employee() -> dict:
     if not format_check(birthdate, '%Y-%m-%d'):
         return make_response(jsonify({"message": "invalid format date"}), 400)
 
-    employee = Employee(
+    employee = Users(
         name=name,
         username=username,
         password=generate_password_hash(password),
         gender=gender,
-        birthdate=birthdate
+        birthdate=birthdate,
+        user_type=UserType.employee
     )
     try:
         db.session.add(employee)
         db.session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
         return make_response(jsonify({"message": "Username already registered"}), 400)
 
@@ -56,8 +60,9 @@ def register_employee() -> dict:
 
 
 @route.get('')
+@jwt_required()
 def get_list_employees() -> dict:
-    employees = Employee.query.all()
+    employees = Users.query.filter(Users.user_type == UserType.employee)
 
     response = [{
         "id": data.id,
@@ -72,8 +77,10 @@ def get_list_employees() -> dict:
 
 
 @route.get('/<int:id>')
+@jwt_required()
 def get_detail_employee(id: int) -> dict:
-    employee = Employee.query.get(id)
+    employee = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.employee).first()
 
     if employee:
         response = {
@@ -86,10 +93,11 @@ def get_detail_employee(id: int) -> dict:
         }
         return make_response(jsonify({"message": "success", "data": response}), 200)
 
-    return make_response(jsonify({"message": "employee not found!"}), 404)
+    return make_response(jsonify({"message": "employee not found!"}), 400)
 
 
 @route.put('/<int:id>')
+@jwt_required()
 def update_employee(id: int) -> dict:
     name: str = request.json.get('name')
     username: str = request.json.get('username')
@@ -97,7 +105,8 @@ def update_employee(id: int) -> dict:
     gender: Gender = request.json.get('gender')
     birthdate: datetime.date = request.json.get('birthdate')
 
-    employee = Employee.query.get(id)
+    employee = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.employee).first()
 
     if employee:
         employee.name = name
@@ -124,14 +133,16 @@ def update_employee(id: int) -> dict:
 
         return make_response(jsonify({"message": "employee updated", "data": response}), 200)
 
-    return make_response(jsonify({"message": "employee not found!"}), 404)
+    return make_response(jsonify({"message": "employee not found!"}), 400)
 
 
 @route.delete('/<int:id>')
+@jwt_required()
 def delete_employee(id: int) -> dict:
-    employee = Employee.query.get(id)
+    employee = Users.query.filter(
+        Users.id == id, Users.user_type == UserType.employee).first()
     if employee:
         db.session.delete(employee)
         db.session.commit()
         return make_response(jsonify({"message": "employee deleted"}), 200)
-    return make_response(jsonify({"message": "employee not found!"}), 404)
+    return make_response(jsonify({"message": "employee not found!"}), 400)

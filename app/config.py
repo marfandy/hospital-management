@@ -1,13 +1,10 @@
 import os
-from pydantic import BaseSettings, Field
+from dotenv import load_dotenv
 
+load_dotenv()
 
-class Configs(BaseSettings):
-    root_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    gcp_cred: str = Field("user-api.json", env="gcp_cred")
+ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-configs = Configs()
-
-gcp_os = os.path.join(configs.root_dir, "secrets", configs.gcp_cred)
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_os
+GCP_CRED: str = os.environ.get('GCP_CRED', 'user-api.json')
+GCP_OS = os.path.join(ROOT_DIR, 'secrets', GCP_CRED)
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_OS

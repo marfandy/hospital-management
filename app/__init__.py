@@ -9,20 +9,22 @@ from api.doctors import route as doctors
 from api.employee import route as employee
 from api.patients import route as patients
 from common.database import db
+from flask_jwt_extended import JWTManager
+from common.scheduler import do_task
+from flask_apscheduler import APScheduler
+
+
+scheduler = APScheduler()
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
-    gcp_cred: str = os.environ.get("gcp_cred", "user-api.json")
-
-    # Directories
-    root_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
     if test_config is None:
         app.config.from_mapping(
             SECRET_KEY=os.environ.get('SECRET_KEY', 'secret_key'),
-            SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI'),
-            SQLALCHEMY_TRACK_MODIFICATIONS=False
+            SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL'),
+            SQLALCHEMY_TRACK_MODIFICATIONS=False,
+            JWT_SECRET_KEY=os.environ.get('JWT_SECRET_KEY')
         )
     else:
         app.config.from_mapping(test_config)
@@ -30,13 +32,25 @@ def create_app(test_config=None):
     db.app = app
     db.init_app(app)
     db.create_all()
+
+    JWTManager(app)
+
     app.register_blueprint(appointments, url_prefix='/appointments')
     app.register_blueprint(auth, url_prefix='/login')
     app.register_blueprint(doctors, url_prefix='/doctors')
     app.register_blueprint(employee, url_prefix='/employee')
     app.register_blueprint(patients, url_prefix='/patients')
 
-    gcp_os = os.path.join(root_dir, "secrets", gcp_cred)
+    scheduler.add_job(
+        id='Scheduled job',
+        func=do_task,
+        trigger='interval',
+        # seconds=86400
+        seconds=60
+    )
+    scheduler.start()
 
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_os
+    @app.errorhandler(404)
+    def handle_404(e):
+        return jsonify({'message': 'not found!'}), 404
     return app
