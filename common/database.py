@@ -56,13 +56,11 @@ class Patiens(db.Model):
 
 class Appointments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey(
-        'patient.id'), nullable=False)
-    doctor_id = db.Column(db.Integer, db.ForeignKey(
-        'users.id'), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patiens.id'))
+    doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     status = db.Column(db.Enum(AppointmentStatus))
-    diagnose = db.Column(db.Text, nullable=True)
-    notes = db.Column(db.Text, nullable=True)
+    diagnose = db.Column(db.Text(), nullable=True)
+    notes = db.Column(db.Text(), nullable=True)
 
     def __repr__(self) -> str:
         return self.status
