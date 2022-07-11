@@ -3,14 +3,17 @@ services:
   web:
     container_name: hospital-management_web
     image: hospital-management:latest
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "80:80"
     environment:
-      - DATABASE_URL=postgresql://postgres:root@db:5432/hospital_management
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/hospital_management
     depends_on:
       - db
-    # command: flask run --host=0.0.0.0 --port=5000
+    # command: flask run --host=0.0.0.0 --port=80
+    command: bash -c "service cron start && flask crontab add && flask run --host=0.0.0.0 --port=80"
   
   db:
     container_name: hospital-management_postgres
@@ -18,10 +21,10 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_DB=hospital_management
     volumes:
       - pgdata:/var/lib/postgresql/data
 volumes:
-  pgdata: {}
+  pgdata:
