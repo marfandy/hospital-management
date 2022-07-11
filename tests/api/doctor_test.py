@@ -9,7 +9,7 @@ import string
 import random
 
 
-class EmployeeTest(unittest.TestCase):
+class DoctorTest(unittest.TestCase):
 
     def setUp(self):
         self.app = create_app(config=config_dict['testing'])
@@ -27,12 +27,16 @@ class EmployeeTest(unittest.TestCase):
 
     def create_user(self):
         user = Users(
-            name='employee',
+            name='doctor',
             username=''.join(random.sample(string.ascii_letters, 10)),
-            password=generate_password_hash('employee'),
+            password=generate_password_hash('doctor'),
             gender=Gender.male.value,
             birthdate=datetime.datetime.strptime("2021-01-01", '%Y-%m-%d'),
-            user_type=UserType.employee
+            user_type=UserType.doctor,
+            work_start_time=datetime.datetime.strptime(
+                "18:00:00", '%H:%M:%S').time(),
+            work_end_time=datetime.datetime.strptime(
+                "20:00:00", '%H:%M:%S').time()
         )
 
         db.session.add(user)
@@ -40,49 +44,54 @@ class EmployeeTest(unittest.TestCase):
 
         return user
 
-    def test_register_employee(self):
+    def test_register_doctor(self):
         data = {
-            "name": "employee",
-            "username": "employee",
-            "password": "employee",
-            "gender": "female",
-            "birthdate": "2022-01-01"
+            "name": "doctor",
+            "username": "doctor",
+            "password": "doctor",
+            "gender": "male",
+            "birthdate": "1993-03-01",
+            "work_start_time": "18:00:00",
+            "work_end_time": "20:00:00"
         }
 
         token = create_access_token(identity='testuser')
 
         header = {'Authorization': f'Bearer {token}'}
 
-        response = self.client.post('/employees', json=data, headers=header)
+        response = self.client.post('/doctors', json=data, headers=header)
         data_response = response.json
+
         assert response.status_code == 201
         assert data.get("username") == data_response.get(
             "data").get("username")
 
-    def test_register_employee_username_already_registed(self):
+    def test_register_doctor_username_already_registed(self):
         user = self.create_user()
-        user.username = 'employee'
+        user.username = 'doctor'
         db.session.add(user)
         db.session.commit()
 
         data = {
-            "name": "employee",
-            "username": "employee",
-            "password": "employee",
-            "gender": "female",
-            "birthdate": "2022-01-01"
+            "name": "doctor",
+            "username": "doctor",
+            "password": "doctor",
+            "gender": "male",
+            "birthdate": "1993-03-01",
+            "work_start_time": "18:00:00",
+            "work_end_time": "20:00:00"
         }
 
         token = create_access_token(identity='testuser')
 
         header = {'Authorization': f'Bearer {token}'}
 
-        response = self.client.post('/employees', json=data, headers=header)
+        response = self.client.post('/doctors', json=data, headers=header)
 
         assert response.status_code == 400
         assert response.json == {"message": "Username already registered"}
 
-    def test_get_employees(self):
+    def test_get_doctors(self):
 
         self.create_user()
         self.create_user()
@@ -93,12 +102,12 @@ class EmployeeTest(unittest.TestCase):
 
         user = Users.query.all()
 
-        response = self.client.get('/employees', headers=header)
+        response = self.client.get('/doctors', headers=header)
 
         assert response.status_code == 200
         assert len(user) == 2
 
-    def test_get_detail_employee(self):
+    def test_get_detail_doctor(self):
 
         user = self.create_user()
 
@@ -106,22 +115,24 @@ class EmployeeTest(unittest.TestCase):
 
         header = {'Authorization': f'Bearer {token}'}
 
-        response = self.client.get(f"/employees/{user.id}", headers=header)
+        response = self.client.get(f"/doctors/{user.id}", headers=header)
         data = response.json
 
-        assert response.status_code == 200
-        assert user.username == data.get("data").get('username')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(user.username, data.get("data").get('username'))
 
-    def test_update_employee(self):
+    def test_update_doctor(self):
 
         user = self.create_user()
 
         data = {
-            "name": "newemployee",
-            "username": "newemployee",
-            "password": "employee",
+            "name": "newdoctor",
+            "username": "newdoctor",
+            "password": "doctor",
             "gender": "male",
-            "birthdate": "2000-01-01"
+            "birthdate": "2000-01-01",
+            "work_start_time": "08:00:00",
+            "work_end_time": "10:00:00"
         }
 
         token = create_access_token(identity='testuser')
@@ -129,7 +140,7 @@ class EmployeeTest(unittest.TestCase):
         header = {'Authorization': f'Bearer {token}'}
 
         response = self.client.put(
-            f"/employees/{user.id}", json=data, headers=header)
+            f"/doctors/{user.id}", json=data, headers=header)
 
         update_user = Users.query.filter(Users.id == user.id).first()
 
@@ -137,7 +148,7 @@ class EmployeeTest(unittest.TestCase):
         assert data.get("name") == update_user.name
         assert data.get("username") == update_user.username
 
-    def test_delete_employee(self):
+    def test_delete_doctor(self):
 
         user = self.create_user()
 
@@ -148,7 +159,7 @@ class EmployeeTest(unittest.TestCase):
         users = Users.query.all()
         assert len(users) == 1
 
-        response = self.client.delete(f"/employees/{user.id}", headers=header)
+        response = self.client.delete(f"/doctors/{user.id}", headers=header)
 
         users = Users.query.all()
 
