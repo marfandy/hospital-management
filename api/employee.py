@@ -114,9 +114,9 @@ def update_employee(id: int) -> dict:
     if employee:
         employee.name = name
         employee.username = username
-        employee.password = generate_password_hash(password),
+        employee.password = generate_password_hash(password)
         employee.gender = gender
-        employee.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d'),
+        employee.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d')
 
         try:
             db.session.add(employee)

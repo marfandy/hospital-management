@@ -45,9 +45,10 @@ def register_appointment() -> dict:
 
     if not validate:
         return make_response(jsonify({"message": "doctor not in duty!"}), 400)
-
+    search = "%{}%".format(datetime_)
     if Appointments.query.filter(
-        Appointments.datetime == datetime_,
+        Appointments.datetime == datetime.datetime.strptime(
+            datetime_, '%Y-%m-%d %H:%M:%S'),
         Appointments.doctor_id == doctor.id
     ).first() is not None:
         return make_response(jsonify({"message": "doctor in orders!"}), 400)
@@ -166,8 +167,8 @@ def update_appointment(id: int) -> dict:
         appointment.datetime = datetime.datetime.strptime(
             datetime_, '%Y-%m-%d %H:%M:%S')
         appointment.status = status
-        appointment.diagnose = diagnose,
-        appointment.notes = notes,
+        appointment.diagnose = diagnose
+        appointment.notes = notes
         try:
             db.session.add(appointment)
             db.session.commit()

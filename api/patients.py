@@ -130,7 +130,7 @@ def update_patient(id: int) -> dict:
         patient.gender = gender
         patient.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d')
         patient.no_ktp = no_ktp
-        patient.address = address,
+        patient.address = address
         try:
             db.session.add(patient)
             db.session.commit()

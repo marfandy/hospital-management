@@ -137,7 +137,7 @@ def update_doctor(id) -> dict:
     if doctor:
         doctor.name = name
         doctor.username = username
-        doctor.password = generate_password_hash(password),
+        doctor.password = generate_password_hash(password)
         doctor.gender = gender
         doctor.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d')
         doctor.work_start_time = datetime.datetime.strptime(
