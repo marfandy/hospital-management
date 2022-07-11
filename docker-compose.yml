@@ -12,8 +12,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/hospital_management
     depends_on:
       - db
-    # command: flask run --host=0.0.0.0 --port=80
-    command: bash -c "service cron start && flask crontab add && flask run --host=0.0.0.0 --port=80"
+    command: flask run --host=0.0.0.0 --port=80
   
   db:
     container_name: hospital-management_postgres
