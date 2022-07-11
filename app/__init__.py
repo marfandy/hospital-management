@@ -5,30 +5,20 @@ from api.doctors import route as doctors
 from api.employee import route as employee
 from api.patients import route as patients
 from common.database import db
-from common.scheduler import crontab
+from common.scheduler import cronjob
 from flask_jwt_extended import JWTManager
-# from flask_apscheduler import APScheduler
+from flask_apscheduler import APScheduler
 from config.config import config_dict
 from werkzeug.exceptions import NotFound, MethodNotAllowed
-
-# scheduler = APScheduler()
+scheduler = APScheduler()
 
 
 def create_app(config=config_dict['dev']):
     app = Flask(__name__, instance_relative_config=True)
-    # if test_config is None:
-    #     app.config.from_mapping(
-    #         SECRET_KEY=os.environ.get('SECRET_KEY', 'secret_key'),
-    #         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL'),
-    #         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    #         JWT_SECRET_KEY=os.environ.get('JWT_SECRET_KEY')
-    #     )
-    # else:
-    #     app.config.from_mapping(test_config)
     app.config.from_object(config)
     db.app = app
     db.init_app(app)
-    crontab.init_app(app)
+
     db.create_all()
 
     JWTManager(app)
@@ -36,17 +26,21 @@ def create_app(config=config_dict['dev']):
     app.register_blueprint(appointments, url_prefix='/appointments')
     app.register_blueprint(auth, url_prefix='/login')
     app.register_blueprint(doctors, url_prefix='/doctors')
-    app.register_blueprint(employee, url_prefix='/employee')
+    app.register_blueprint(employee, url_prefix='/employees')
     app.register_blueprint(patients, url_prefix='/patients')
 
-    # scheduler.add_job(
-    #     id='Scheduled job',
-    #     func=do_task,
-    #     trigger='interval',
-    #     # seconds=86400
-    #     seconds=60
-    # )
+    # add cronjob every day at 01:00
+    @scheduler.task('cron', id='big_query', minute='*', hour="*")
+    def running_cronjob():
+        cronjob()
+
     # scheduler.start()
+    try:
+        scheduler.start()
+    except Exception as e:
+        print(e)
+    scheduler.shutdown()
+    print('done!')
 
     @app.errorhandler(NotFound)
     def handle_404(e):
