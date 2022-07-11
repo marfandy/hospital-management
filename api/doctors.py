@@ -43,22 +43,27 @@ def register_doctor() -> dict:
     if work_start_time > work_end_time:
         return make_response(jsonify({"message": "start time should be lower than end time"}), 400)
 
+    if Users.query.filter(Users.username == username).first() is not None:
+        return make_response(jsonify({"message": "Username already registered"}), 400)
+
     doctor = Users(
         name=name,
         username=username,
         password=generate_password_hash(password),
         gender=gender,
-        birthdate=birthdate,
-        work_start_time=work_start_time,
-        work_end_time=work_end_time,
+        birthdate=datetime.datetime.strptime(birthdate, '%Y-%m-%d'),
+        work_start_time=datetime.datetime.strptime(
+            work_start_time, '%H:%M:%S').time(),
+        work_end_time=datetime.datetime.strptime(
+            work_end_time, '%H:%M:%S').time(),
         user_type=UserType.doctor
     )
     try:
         db.session.add(doctor)
         db.session.commit()
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
-        return make_response(jsonify({"message": "Username already registered"}), 400)
+        return make_response(jsonify({"message": str(e)}), 400)
 
     response = {
         "id": doctor.id,
@@ -134,9 +139,11 @@ def update_doctor(id) -> dict:
         doctor.username = username
         doctor.password = generate_password_hash(password),
         doctor.gender = gender
-        doctor.birthdate = birthdate
-        doctor.work_start_time = work_start_time
-        doctor.work_end_time = work_end_time
+        doctor.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d')
+        doctor.work_start_time = datetime.datetime.strptime(
+            work_start_time, '%H:%M:%S').time()
+        doctor.work_end_time = datetime.datetime.strptime(
+            work_end_time, '%H:%M:%S').time()
 
         try:
             db.session.add(doctor)

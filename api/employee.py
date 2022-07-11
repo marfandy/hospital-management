@@ -32,12 +32,15 @@ def register_employee() -> dict:
     if not format_check(birthdate, '%Y-%m-%d'):
         return make_response(jsonify({"message": "invalid format date"}), 400)
 
+    if Users.query.filter(Users.username == username).first() is not None:
+        return make_response(jsonify({"message": "Username already registered"}), 400)
+
     employee = Users(
         name=name,
         username=username,
         password=generate_password_hash(password),
         gender=gender,
-        birthdate=birthdate,
+        birthdate=datetime.datetime.strptime(birthdate, '%Y-%m-%d'),
         user_type=UserType.employee
     )
     try:
@@ -45,7 +48,7 @@ def register_employee() -> dict:
         db.session.commit()
     except IntegrityError as e:
         db.session.rollback()
-        return make_response(jsonify({"message": "Username already registered"}), 400)
+        return make_response(jsonify({"message": str(e)}), 400)
 
     response = {
         "id": employee.id,
@@ -113,7 +116,7 @@ def update_employee(id: int) -> dict:
         employee.username = username
         employee.password = generate_password_hash(password),
         employee.gender = gender
-        employee.birthdate = birthdate
+        employee.birthdate = datetime.datetime.strptime(birthdate, '%Y-%m-%d'),
 
         try:
             db.session.add(employee)
