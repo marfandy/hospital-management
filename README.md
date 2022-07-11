@@ -30,5 +30,5 @@ This presume that you have installed apps above.
 4. Start hacking!
 
     ```bash
-    python index.py
+    flask run
     ```
