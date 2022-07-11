@@ -2,12 +2,9 @@ from typing import List
 
 from config.config import Config
 from google.cloud import bigquery
-from flask_crontab import Crontab
 from common.database import Patiens, db
 
 client = bigquery.Client()
-
-crontab = Crontab()
 
 
 class BigqueryService:
@@ -61,6 +58,5 @@ class BigqueryService:
 service = BigqueryService()
 
 
-@crontab.job(minute="*", hour="*", day="*")
 def cronjob():
     service.update_data_patients(limit=100, temp_data=[])
