@@ -43,12 +43,13 @@ class Patiens(db.Model):
     name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.Enum(Gender))
     birthdate = db.Column(db.Date, nullable=False)
-    no_ktp = db.Column(db.String(20), unique=True, nullable=False)
+    no_ktp = db.Column(db.BigInteger, unique=True, nullable=False)
     address = db.Column(db.String(75), nullable=False)
     vaccine_type = db.Column(db.String(20), nullable=True)
     vaccine_count = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now())
     updated_at = db.Column(db.DateTime, default=datetime.now())
+    appointments = db.relationship('Appointments', backref='patiens')
 
     def __repr__(self) -> str:
         return self.name
@@ -58,6 +59,7 @@ class Appointments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patiens.id'))
     doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    datetime = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.Enum(AppointmentStatus))
     diagnose = db.Column(db.Text(), nullable=True)
     notes = db.Column(db.Text(), nullable=True)
